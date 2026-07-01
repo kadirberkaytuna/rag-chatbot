@@ -1,0 +1,4 @@
+Berkay, Berlin'de yaşayan bir yazılım geliştiricisidir.
+HTW Berlin'de Wirtschaftsinformatik okudu.
+En sevdiği yemek sarmadır.
+Java ve Python ile çalışıyor.

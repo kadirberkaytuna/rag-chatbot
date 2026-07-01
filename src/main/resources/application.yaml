@@ -6,13 +6,20 @@ spring:
     username: raguser
     password: ragpass
 
-langchain4j:
-  ollama:
-    chat-model:
+app:
+  llm:
+    provider: ollama          # ollama | anthropic | openai
+    ollama:
       base-url: http://localhost:11434
       model-name: llama3.2:3b
-      temperature: 0.7
-      timeout: PT120S
-      rag:
-        content-retriever:
-          embedding-store: enabled
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      model-name: claude-sonnet-4-6
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model-name: gpt-4o-mini
+
+langchain4j:
+  rag:
+    content-retriever:
+      embedding-store: enabled

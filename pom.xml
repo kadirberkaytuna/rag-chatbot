@@ -51,15 +51,18 @@
 			<artifactId>langchain4j-spring-boot-starter</artifactId>
 		</dependency>
 
-		<!-- Anthropic Claude -->
+		<!-- LLM sağlayıcıları (elle yönetilen: seçime göre biri aktif olur) -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
-			<artifactId>langchain4j-anthropic-spring-boot-starter</artifactId>
+			<artifactId>langchain4j-ollama</artifactId>
 		</dependency>
-		<!-- Ollama (lokal test modeli) -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
-			<artifactId>langchain4j-ollama-spring-boot-starter</artifactId>
+			<artifactId>langchain4j-anthropic</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-open-ai</artifactId>
 		</dependency>
 
 		<!-- pgvector embedding store -->
