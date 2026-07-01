@@ -2,7 +2,7 @@
 
 A document-aware question answering assistant built in Java. Upload a PDF or TXT file and the application answers questions grounded strictly in that document, using a Retrieval-Augmented Generation (RAG) pipeline.
 
-The project runs fully on a local machine with no paid API required, using a local embedding model and a locally hosted LLM through Ollama. It can be switched to Anthropic Claude with a single configuration change.
+The language model provider is selectable: the application ships with a fully local setup (no paid API required) and can be switched to Anthropic Claude or OpenAI through a single configuration value.
 
 ## What it does
 
@@ -26,7 +26,7 @@ The project runs fully on a local machine with no paid API required, using a loc
 
 **Document parsing:** Apache Tika (PDF and TXT)
 
-**Language model:** Ollama with llama3.2:3b for local use, Anthropic Claude as an optional alternative
+**Language model (selectable):** Ollama for local use, Anthropic Claude, or OpenAI
 
 ## Architecture
 
@@ -45,16 +45,18 @@ Document (PDF/TXT)
       |
    Vector similarity retrieval
       |
-   LLM (Ollama / Claude) + retrieved context
+   LLM (Ollama / Claude / OpenAI) + retrieved context
       |
    Grounded answer
 ```
+
+The active language model is chosen at startup. A single property (`app.llm.provider`) selects the provider, and Spring conditionally creates only the matching model instance. This keeps the application logic, document ingestion, and retrieval identical across all providers, so a provider can be swapped without changing any code.
 
 ## Prerequisites
 
 * Java 17 or higher
 * Docker Desktop
-* Ollama, with the `llama3.2:3b` model pulled
+* Ollama with the `llama3.2:3b` model pulled (only required for the default local setup)
 
 ## Getting started
 
@@ -66,7 +68,7 @@ docker compose up -d
 
 This starts a PostgreSQL instance with pgvector on port 5432. The embedding table is created automatically on first run.
 
-**2. Pull the local model**
+**2. Pull the local model (for the default Ollama setup)**
 
 ```bash
 ollama pull llama3.2:3b
@@ -78,7 +80,7 @@ ollama pull llama3.2:3b
 ./mvnw spring-boot:run
 ```
 
-The application starts on `http://localhost:8080`.
+The application starts on `http://localhost:8080` and uses Ollama by default, so no API key is needed to run it.
 
 ## API usage
 
@@ -96,21 +98,64 @@ curl -X POST http://localhost:8080/api/chat -F "question=What is the document ab
 
 The assistant answers based only on the uploaded documents. If the answer is not found in them, it says so rather than inventing one.
 
-## Configuration
+## Choosing your LLM provider
 
-Database and model settings are defined in `src/main/resources/application.yaml`. The local development setup uses Ollama:
+The provider is controlled by `app.llm.provider` in `src/main/resources/application.yaml`. Three values are supported:
 
-```yaml
-langchain4j:
-  ollama:
-    chat-model:
-      base-url: http://localhost:11434
-      model-name: llama3.2:3b
+| Provider    | Value        | API key required | Notes                              |
+|-------------|--------------|------------------|------------------------------------|
+| Ollama      | `ollama`     | No               | Runs locally, default              |
+| Anthropic   | `anthropic`  | Yes              | Uses Claude models                 |
+| OpenAI      | `openai`     | Yes              | Uses GPT models                    |
+
+API keys are read from environment variables and are never stored in the repository.
+
+**To use Anthropic Claude:**
+
+1. Set `app.llm.provider` to `anthropic`.
+2. Provide the key as an environment variable:
+
+```bash
+# Windows (PowerShell)
+$env:ANTHROPIC_API_KEY="your-key-here"
+
+# macOS / Linux
+export ANTHROPIC_API_KEY="your-key-here"
 ```
 
-### Switching to Anthropic Claude
+**To use OpenAI:**
 
-To use Claude instead of the local model, provide an Anthropic API key as an environment variable (it should never be committed to the repository) and configure the Anthropic chat model in `application.yaml`. The rest of the pipeline, including document ingestion and retrieval, stays unchanged. This is one of the benefits of the LangChain4j abstraction: the model can be swapped without touching the application logic.
+1. Set `app.llm.provider` to `openai`.
+2. Provide the key:
+
+```bash
+# Windows (PowerShell)
+$env:OPENAI_API_KEY="your-key-here"
+
+# macOS / Linux
+export OPENAI_API_KEY="your-key-here"
+```
+
+Model names for each provider are also configurable in `application.yaml`.
+
+## Configuration
+
+The relevant section of `application.yaml`:
+
+```yaml
+app:
+  llm:
+    provider: ollama          # ollama | anthropic | openai
+    ollama:
+      base-url: http://localhost:11434
+      model-name: llama3.2:3b
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      model-name: claude-sonnet-4-6
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model-name: gpt-4o-mini
+```
 
 ## Project structure
 
@@ -120,9 +165,10 @@ src/main/java/com/berkay/rag_chatbot/
 ├── Assistant.java                  AI service interface (declarative RAG)
 ├── DocumentIngestionService.java   Parses, splits, embeds and stores documents
 ├── EmbeddingStoreConfig.java       Embedding model and pgvector configuration
+├── ChatModelConfig.java            Selects the active LLM provider at startup
 └── ChatController.java             REST endpoints for upload and chat
 ```
 
 ## Notes
 
-The default local model (llama3.2:3b) is small and intended for development and demonstration. Answer quality improves significantly when switching to Anthropic Claude or a larger model. The retrieval pipeline itself is identical in both cases.
+The default local model (llama3.2:3b) is small and intended for development and demonstration. Answer quality improves significantly when switching to Anthropic Claude or OpenAI. The retrieval pipeline itself is identical across all providers.
