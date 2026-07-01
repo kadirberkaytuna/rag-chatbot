@@ -82,6 +82,10 @@ ollama pull llama3.2:3b
 
 The application starts on `http://localhost:8080` and uses Ollama by default, so no API key is needed to run it.
 
+
+## Web interface
+
+Once the application is running, open `http://localhost:8080` in your browser to upload a document and ask questions through a simple web UI. The REST API below is also available for programmatic use.
 ## API usage
 
 **Upload a document**
@@ -167,6 +171,9 @@ src/main/java/com/berkay/rag_chatbot/
 ├── EmbeddingStoreConfig.java       Embedding model and pgvector configuration
 ├── ChatModelConfig.java            Selects the active LLM provider at startup
 └── ChatController.java             REST endpoints for upload and chat
+
+src/main/resources/static/
+└── index.html                      Simple web interface
 ```
 
 ## Notes
